@@ -203,6 +203,9 @@ def require_actions(env):
             and env.get("GITHUB_EVENT_NAME") in {"schedule", "workflow_dispatch"}
             and env.get("GH_TOKEN")):
         raise WatchError("Issue creation requires the authorized fork/default-branch Actions context")
+    if (env.get("GITHUB_EVENT_NAME") == "schedule"
+            and env.get("PID_UPSTREAM_ISSUES_ENABLED") != "true"):
+        raise WatchError("Scheduled issue creation has not been enabled; use preview")
 
 
 def main():

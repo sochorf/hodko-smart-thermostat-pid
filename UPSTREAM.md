@@ -11,6 +11,12 @@ It runs only in `sochorf/hodko-smart-thermostat-pid`, on default branch `hodko`.
 The explicit reviewed baseline is `upstream_tag` in `release-policy.json`,
 initially **2026.11.2**, alongside its existing `upstream_commit`.
 
+Scheduled checks are **read-only by default**. Creating issues on a schedule
+requires repository Actions variable `PID_UPSTREAM_ISSUES_ENABLED=true` (literal
+lowercase). An absent/false variable leaves preview running. Manual dispatch
+defaults to preview independently of that variable; `create_issues=true` is an
+explicit one-off issue-creation request, useful before enabling the daily writer.
+
 Every newer numeric `X.Y.Z` version gets one review issue assigned to `sochorf`,
 with release/compare links and a checklist for preserving Hodko fixes and tests.
 The watcher scans all release pages, so it catches versions missed between runs.
@@ -53,26 +59,79 @@ pagination, open/closed issue deduplication, reruns, a lost creation response,
 read failures, rate limits, bounded catch-up, untrusted metadata and write guards.
 They run in normal PR/push CI as well as before each scheduled check.
 
-After a separately approved commit/push to default branch `hodko`:
+### Verified preparation, 22 November 2026
 
-1. Check Actions is enabled for this fork and this specific workflow.
-2. Run **Watch upstream PID releases** manually with `create_issues=false`.
-   Review the summary, baseline and candidate versions. Manual dispatch defaults
-   to this read-only preview; scheduled runs create missing issues automatically.
-3. After approving live issue creation, use `create_issues=true` or allow the
-   next daily run. Review the single issue per candidate; repeat the check and
-   verify it does not create duplicates. Do not fabricate a release to test this.
-4. Enable notifications for assigned issues/failed Actions in your GitHub account.
-   Assignment creates the normal GitHub notification; email/mobile delivery still
-   depends on personal settings. As a separate fallback, **Watch → Custom →
-   Releases** on the upstream repository. Do not assume this subscription was set.
+User commit **0498bf48bcdcaf202a8c2880c0b54696d96c4f8f** contains the original
+watcher; the additional default-preview guard in this document must be committed
+with the workflow/script/tests before the first push. At preparation time the
+remote `hodko` was still **27a7292afa95c7c116a26e0fe65bcad16f55b697**, Issues were
+enabled, and the watcher was not published. Repository variable settings were
+not inspected or changed. Local read-only execution of 0498bf4 against the real
+release/issue API succeeded with baseline 2026.11.2, zero newer/missing versions,
+zero tracked candidates and zero created issues. This was not a hosted Actions run.
 
-**Publishing the workflow to the default branch enables scheduled issue creation**
-once Actions permits it. There is no HA restart or PID release required. Offline
-tests are not evidence of a GitHub-hosted run, token permissions or notification
-delivery. Public fork scheduled workflows may require enabling; GitHub can disable
-schedules after 60 days of repository inactivity, and scheduled runs can be late.
-Check workflow health and retain the independent Watch Releases notification.
+### A. Publish the reviewed watcher, without activating daily writes
+
+1. Commit the default-preview guard. Verify clean branch `hodko`, review the
+   whole range from 27a7292, and run the offline watcher and release checks above.
+   PID runtime files/manifest/patch must still be unchanged. Record the final SHA.
+2. Before push, inspect **Settings → Secrets and variables → Actions → Variables**.
+   `PID_UPSTREAM_ISSUES_ENABLED` must be absent or `false`. If already `true`,
+   stop and disable that daily-write permission as part of the approved launch.
+3. User pushes only `hodko` to this fork. No tag, release, HA pull, restart or
+   Marketplace install is needed. Check remote SHA equals the reviewed SHA and
+   ordinary regression CI passes. Check Actions is enabled for this fork and
+   **Watch upstream PID releases**; no need to modify other workflows.
+
+### B. First GitHub-hosted read-only run
+
+In **Actions → Watch upstream PID releases → Run workflow**, select branch
+`hodko` and leave **create_issues=false**. Record run URL/ID, `head_sha`, event
+`workflow_dispatch`, conclusion, and JSON summary. Require:
+
+- offline watcher tests pass; the job ran, rather than being skipped;
+- `mode=preview`, `baseline=2026.11.2`, `created_issues=[]`;
+- every candidate links to a genuine newer stable upstream release;
+- no issue was created or modified by this run.
+
+Expected at preparation time: `newer_versions=0`, `missing_versions=[]`,
+`already_tracked=0`, `remaining=0`. Re-check current upstream data; these are not
+fixed assertions for a later day. On errors/skipped jobs keep daily writes off.
+
+### C. Controlled issue creation and duplicate acceptance
+
+Only after approving the preview, manually run the same workflow on the reviewed
+SHA with **create_issues=true**, while leaving scheduled writes off. This is a
+GitHub-only mutation. If there is a genuine new release, require one issue per
+missing canonical version (up to five in one run), assigned to `sochorf`, with
+the expected hidden marker, release/compare links and review checklist.
+
+After that run finishes, repeat the same explicit manual run. For unchanged
+upstream data with no remaining backlog, require **no new issue numbers**,
+`created_issues=[]`, `missing_versions=[]`, and `already_tracked` increased by
+the number created in the first run. Existing issue numbers, state, title, body,
+comments and `updated_at` must not change merely because the watcher ran again.
+If the upstream changed or backlog remains, only those newly untracked versions
+may get new issues. Wait for the first run to finish rather than launching a race.
+
+If there are no newer releases, both runs may succeed with zero writes. That
+validates the hosted no-op path, **not** live POST permissions, assignment,
+notification delivery, or duplicate handling after a real create. Record those
+as pending until the first genuine release. Closed-issue and lost-response
+deduplication have offline coverage; do not fabricate releases, lower the
+baseline, or create synthetic production issues just to exercise them.
+
+After acceptance, set repository Actions variable
+**PID_UPSTREAM_ISSUES_ENABLED=true**. Verify the next scheduled run reports
+`mode=apply`, event `schedule`, reviewed `head_sha` and a successful summary.
+Daily check is 07:17 UTC, subject to GitHub scheduling delays. This variable
+does not authorize merging code or installing an update.
+
+Enable notifications for assigned issues/failed Actions in your GitHub account.
+Email/mobile delivery depends on personal settings. As an independent fallback,
+use **Watch → Custom → Releases** on upstream; do not assume it was configured.
+Public fork schedules may require enabling; GitHub can disable schedules after
+60 days of repository inactivity. Check workflow health periodically.
 
 ## Review and adoption
 
@@ -86,11 +145,24 @@ Live deployment and rollback remain a separate controlled procedure.
 
 ## Disable / return
 
-Disable only **Watch upstream PID releases** in GitHub Actions (or revert this
-watcher commit). Leave existing review issues in place for future deduplication.
-This stops monitoring/issue creation without changing the installed PID, its
-version, heating, DHW, targets or any integration setting. Re-enabling catches up
-newer releases, bounded to five new issues per run.
+For a pause of **scheduled issue creation**, set
+`PID_UPSTREAM_ISSUES_ENABLED=false` (or delete it); future scheduled runs remain
+read-only. An explicit manual `create_issues=true` can still write, so this is
+not a total shutdown. Changing a variable does not stop a run already in progress.
+
+For a **full stop**, Actions → **Watch upstream PID releases** → menu →
+**Disable workflow**. Inspect queued/running jobs: disabling prevents new
+triggers but does not cancel existing runs. Cancel those runs too if an immediate
+stop is needed, and then read issues to check whether any in-flight POST completed.
+Never repeat a possibly completed POST blindly. Keep all existing review issues
+and their markers for future deduplication. No deletion of the fork, release,
+Marketplace record or installed component is required.
+
+For re-entry, leave the variable absent/false, enable only this workflow, repeat
+the read-only acceptance, then explicitly authorize daily writes. The workflow
+catches up missed releases, capped at five new issues per run. A reviewed revert
+of the watcher changes is an alternative code rollback, not an HA rollback.
+Neither option changes PID, heating, DHW, room targets or Spook.
 
 ## Primary references
 
@@ -98,3 +170,6 @@ newer releases, bounded to five new issues per run.
 - [Repository issue API](https://docs.github.com/en/rest/issues/issues#list-repository-issues)
 - [Workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
 - [Schedule restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+- [Variables context](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#vars-context)
+- [Manual dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+- [Disabling a workflow and existing runs](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows)

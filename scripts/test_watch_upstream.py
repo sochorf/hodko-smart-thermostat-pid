@@ -202,7 +202,8 @@ class WatchTests(unittest.TestCase):
 
     def test_apply_requires_correct_actions_context(self):
         env = dict(GITHUB_ACTIONS="true", GITHUB_REPOSITORY=watch.TARGET,
-                   GITHUB_REF="refs/heads/hodko", GITHUB_EVENT_NAME="schedule", GH_TOKEN="test")
+                   GITHUB_REF="refs/heads/hodko", GITHUB_EVENT_NAME="schedule", GH_TOKEN="test",
+                   PID_UPSTREAM_ISSUES_ENABLED="true")
         watch.require_actions(env)
         watch.require_actions(env | {"GITHUB_EVENT_NAME": "workflow_dispatch"})
         for field, value in [("GITHUB_ACTIONS", "false"), ("GITHUB_REPOSITORY", watch.UPSTREAM),
@@ -210,6 +211,21 @@ class WatchTests(unittest.TestCase):
                              ("GH_TOKEN", "")]:
             with self.subTest(field=field), self.assertRaises(watch.WatchError):
                 watch.require_actions(env | {field: value})
+
+    def test_schedule_is_read_only_until_enabled_and_manual_apply_is_explicit(self):
+        env = dict(GITHUB_ACTIONS="true", GITHUB_REPOSITORY=watch.TARGET,
+                   GITHUB_REF="refs/heads/hodko", GITHUB_EVENT_NAME="schedule", GH_TOKEN="test")
+        for value in [None, "", "false", "TRUE", "1"]:
+            settings = env if value is None else env | {"PID_UPSTREAM_ISSUES_ENABLED": value}
+            with self.subTest(value=value), patch.dict(watch.os.environ, settings, clear=True), \
+                    patch("sys.argv", ["watch_upstream.py", "--apply"]), \
+                    patch.object(watch, "GitHub") as client, \
+                    patch("sys.stderr", new_callable=io.StringIO):
+                self.assertEqual(watch.main(), 1)
+                client.assert_not_called()
+        watch.require_actions(env | {"PID_UPSTREAM_ISSUES_ENABLED": "true"})
+        # Explicit manual --apply is permitted for acceptance before arming cron.
+        watch.require_actions(env | {"GITHUB_EVENT_NAME": "workflow_dispatch"})
 
     def test_real_http_adapter_pagination_and_post_contract(self):
         api = watch.GitHub("private-token")

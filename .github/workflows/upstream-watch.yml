@@ -38,7 +38,8 @@ jobs:
       - name: Check upstream and record review issues
         env:
           GH_TOKEN: ${{ github.token }}
-          WATCH_APPLY: ${{ github.event_name == 'schedule' || inputs.create_issues }}
+          PID_UPSTREAM_ISSUES_ENABLED: ${{ vars.PID_UPSTREAM_ISSUES_ENABLED }}
+          WATCH_APPLY: ${{ (github.event_name == 'schedule' && vars.PID_UPSTREAM_ISSUES_ENABLED == 'true') || (github.event_name == 'workflow_dispatch' && inputs.create_issues) }}
         run: |
           if [ "$WATCH_APPLY" = "true" ]; then
             python3 scripts/watch_upstream.py --apply
