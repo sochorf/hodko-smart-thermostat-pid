@@ -1,0 +1,47 @@
+name: Watch upstream PID releases
+
+on:
+  schedule:
+    - cron: '17 7 * * *'  # 07:17 UTC; 08:17 CET / 09:17 CEST
+  workflow_dispatch:
+    inputs:
+      create_issues:
+        description: Create missing review issues (false = read-only preview)
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One writer across scheduled/manual runs; do not cancel a POST in flight.
+concurrency:
+  group: pid-upstream-release-issues
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    if: >-
+      github.repository == 'sochorf/hodko-smart-thermostat-pid' &&
+      github.ref == 'refs/heads/hodko'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Offline watcher regression tests
+        run: python3 scripts/test_watch_upstream.py
+      - name: Check upstream and record review issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WATCH_APPLY: ${{ github.event_name == 'schedule' || inputs.create_issues }}
+        run: |
+          if [ "$WATCH_APPLY" = "true" ]; then
+            python3 scripts/watch_upstream.py --apply
+          else
+            python3 scripts/watch_upstream.py
+          fi

@@ -61,5 +61,6 @@
     "test_bar_boundaries.py": "49a87f0db73d5dec7f08a371750e7278acda1d73a2548f157ad6ab249c18bffc",
     "test_climate.py": "eda01962130afb6a832c40ca5f67d643d54e9c843dae9ced118703fa87e88fb7"
   },
-  "patch_sha256": "d9e1f604f9920db5088ea283bc4cb956624b29ede22c6ad1aec1be1a64914961"
+  "patch_sha256": "d9e1f604f9920db5088ea283bc4cb956624b29ede22c6ad1aec1be1a64914961",
+  "upstream_tag": "2026.11.2"
 }
