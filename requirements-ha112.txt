@@ -1,0 +1,4 @@
+# Official PyPI artifacts; install after the reviewed .11.1 dependency lock.
+homeassistant==2026.11.2 \
+    --hash=sha256:3d83587c7770bc1cb071f65388e9864732809d5077e0691e37cd9ce4ca4a9ca5 \
+    --hash=sha256:7a026d4324a59b9fdb694816ad72ade4fc16a7a11a11b87b3c93c61258800cc0

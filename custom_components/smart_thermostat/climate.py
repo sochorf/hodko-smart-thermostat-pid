@@ -1172,6 +1172,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode | str) -> None:
         """Set new target hvac mode."""
+        previous_hvac_mode = self._hvac_mode
         if not self._apply_hvac_mode_state(hvac_mode):
             return
 
@@ -1198,19 +1199,21 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             if self._pid_controller is not None:
                 self._pid_controller.clear_samples(clear_integral=False)
 
-        # Clear samples when toggling between active modes (HEAT <-> COOL). Not when the mode is
-        # first set at startup (old mode None): that would discard the integral restored from pid_i.
+        # Fresh timing on every OFF -> active transition; preserve thermal memory
+        # unless the active direction changes. Source freshness is not refreshed.
         if self._hvac_mode != HVACMode.OFF:
-            # Reset integral only if the active thermal direction changed (e.g. HEAT -> COOL or HEAT -> OFF -> COOL)
-            if (
+            direction_changed = (
                 self._last_active_hvac is not None
                 and self._last_active_hvac != self._hvac_mode
-                and self._pid_controller is not None
+            )
+            if self._pid_controller is not None and (
+                previous_hvac_mode == HVACMode.OFF or direction_changed
             ):
                 self._previous_temp = None
                 self._previous_temp_time = None
+                self._cur_temp_time = None
                 self._last_pid_calc_time = None
-                self._pid_controller.clear_samples(clear_integral=True)
+                self._pid_controller.clear_samples(clear_integral=direction_changed)
             self._last_active_hvac = self._hvac_mode
 
         if self._hvac_mode != HVACMode.OFF:
@@ -1219,22 +1222,24 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self.async_write_ha_state()
 
     async def _async_close_previous_period(self) -> None:
-        """Close the previous time period before a setpoint change to avoid integral kick."""
-        if self._current_temp is None or self._target_temp is None:
+        """Settle the old target without writing an obsolete actuator output."""
+        if (
+            self.hass.state != CoreState.running
+            or self._hvac_mode == HVACMode.OFF
+            or self._current_temp is None
+            or self._target_temp is None
+            or self.pid_mode == "off"
+            or self._autotune != "none"
+            or (
+                self._sensor_stall != 0
+                and time.time() - self._last_sensor_update > self._sensor_stall
+            )
+        ):
             return
-
-        # 1. We advance the clock to the present moment to settle the entirety of the previous setpoint.
-        if not self._sampling_period:
-            now = time.time()
-            self._previous_temp_time = self._cur_temp_time
-            self._cur_temp_time = now
-
-        # 2. We force the PID calculation on the previous setpoint
-        await self._async_control_heating(calc_pid=True)
-
-        # 3. We equalize the timestamps so that the immediate calculation with the new setpoint gives dt = 0
-        if not self._sampling_period:
-            self._previous_temp_time = self._cur_temp_time
+        async with self._temp_lock:
+            if not self._sampling_period:
+                self._cur_temp_time = time.time()
+            await self.calc_pid()
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -1489,17 +1494,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     self._target_temp,
                 )
 
-            if (
-                self._sensor_stall != 0
-                and time.time() - self._last_sensor_update > self._sensor_stall
-            ):
-                # sensor not updated for too long, considered as stall, set to safety level
-                self._control_output = self._output_safety
-                await self.set_control_value()
-                self.async_write_ha_state()
-                return
-
-            if not self._active or self._hvac_mode == HVACMode.OFF:
+            if self._hvac_mode == HVACMode.OFF:
                 if (
                     self._force_off_state
                     and self._hvac_mode == HVACMode.OFF
@@ -1516,6 +1511,20 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     else:
                         self._control_output = self._output_min
                         await self._async_set_valve_value(self._control_output)
+                self.async_write_ha_state()
+                return
+
+            if (
+                self._sensor_stall != 0
+                and time.time() - self._last_sensor_update > self._sensor_stall
+            ):
+                # sensor not updated for too long, considered as stall, set to safety level
+                self._control_output = self._output_safety
+                await self.set_control_value()
+                self.async_write_ha_state()
+                return
+
+            if not self._active:
                 self.async_write_ha_state()
                 return
 
@@ -1905,9 +1914,12 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     self._current_temp,
                     self._target_temp,
                     self._cur_temp_time,
-                    self._previous_temp_time,
+                    self._last_pid_calc_time,
                     self._ext_temp,
                 )
+                # Repeated source reports may advance _cur_temp_time without a
+                # calculation; only a completed calculation consumes elapsed time.
+                self._last_pid_calc_time = self._cur_temp_time
             self._p = round(self._pid_controller.proportional, self._output_precision)
             self._i = round(self._pid_controller.integral, self._output_precision)
             self._d = round(self._pid_controller.derivative, self._output_precision)

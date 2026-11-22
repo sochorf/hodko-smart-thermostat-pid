@@ -1,0 +1,65 @@
+{
+  "version": "2026.11.2.1",
+  "upstream_repository": "https://github.com/ScratMan/HASmartThermostat",
+  "upstream_commit": "a2e7e42b4c14d84dcba5ae11f93451ce08e4cbea",
+  "previous_git_version": "2026.11.2+hodko.bar.1",
+  "published_repository": null,
+  "component_hashes_before_manifest_change": {
+    "custom_components/smart_thermostat/__init__.py": "c96f8eb7428483ad3ae2f291fdda10e9ff48fd3abc46d94baf3f8f4504bcda65",
+    "custom_components/smart_thermostat/brand/icon.png": "a285cb0c3da2ceac7dbe76ad5fbdd6b15138946235370222d1e3ef743610b64a",
+    "custom_components/smart_thermostat/climate.py": "6bed9e987288566a7d48b21221fbe38895e826fa3fbca00acfda08b8e5e7e9c0",
+    "custom_components/smart_thermostat/config_flow.py": "47669c5f5fc710b329640dd4554773ecdfef86d37d747bfc8615180c3a136bdb",
+    "custom_components/smart_thermostat/const.py": "b621b9707cece73b8b86a8ef6542fd67e13ed93b9d0b929a2c2ec5bf7ff8e666",
+    "custom_components/smart_thermostat/icons.json": "12b5c43996250793643272c8cc3bf7358d86c267dadc03c7ad28ccc3a13b9865",
+    "custom_components/smart_thermostat/manifest.json": "0b8e139dd54ccd008a00f413a49665a2de018586089c2b221b49561e8f6fdc72",
+    "custom_components/smart_thermostat/pid_controller/LICENSE": "ec423cc5506eea1ffbfc9955c3ec8f86139996963d84ff306a5ee41eda8a4ff1",
+    "custom_components/smart_thermostat/pid_controller/README.md": "06d3a721d21a0c4d18c8a48a69793312e734e8e5e8b2b337bce91a9b55b9941d",
+    "custom_components/smart_thermostat/pid_controller/__init__.py": "ba6fdbffb877064b9cd03a0d0a9fb871ce5943ecaa2096f237c8f6ca9247f519",
+    "custom_components/smart_thermostat/services.yaml": "2fc4a4b032de8d7dfd52dbae6caea9621b7da0408ee0894493d9c52812a1e581",
+    "custom_components/smart_thermostat/strings.json": "0c55cc75a00eb8700485fbb257dc2a816933c53fdb86e6643e0be33d75ba757f",
+    "custom_components/smart_thermostat/translations/de.json": "68bf1e3d4d2597ee72ba65732072a6a3e704dc03878e9949d237ed0024b88e3a",
+    "custom_components/smart_thermostat/translations/en.json": "0c55cc75a00eb8700485fbb257dc2a816933c53fdb86e6643e0be33d75ba757f",
+    "custom_components/smart_thermostat/translations/fr.json": "85345dfc431c9919abffe5304d00b913a55a7a08afaaaa5750d1b89cf1176a10",
+    "custom_components/smart_thermostat/translations/it.json": "4235c14ddadaa9578ca4edf4152cd058d8c42f36673772c5159a31c7a03a412a"
+  },
+  "original_manifest": {
+    "domain": "smart_thermostat",
+    "name": "Smart thermostat",
+    "codeowners": [
+      "@ScratMan"
+    ],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/ScratMan/HASmartThermostat",
+    "iot_class": "local_push",
+    "issue_tracker": "https://github.com/ScratMan/HASmartThermostat/issues",
+    "requirements": [],
+    "version": "2026.11.2+hodko.bar.1"
+  },
+  "regression_files": [
+    "test_bar_boundaries.py",
+    "test_bar_extra.py",
+    "test_bar_restore.py",
+    "test_climate.py",
+    "test_hodko_bar.py",
+    "test_min_cycle.py",
+    "test_on_off_services.py",
+    "test_pid_transitions.py",
+    "test_seconds_durations.py",
+    "test_startup.py"
+  ],
+  "regression_hashes": {
+    "test_hodko_bar.py": "27724dd1c1240e8a4bb4811cb305f5e51dd36927a35ec671fff05a0a61d37741",
+    "conftest.py": "39acb70fe878b9981a30b82b66edefda9661d2e8b112dce329beaa3a3363629a",
+    "test_startup.py": "fdbc4eeb974ae1640f7379e5fd1e06b95a333700ada7963f30b5730a143c84c5",
+    "test_min_cycle.py": "a7569ee9a3e43d47cacc8c2a02e120cf137f505165f2a8760cc561e6bc2eb317",
+    "test_bar_extra.py": "7d0d219a7dd4ec4eea356e881a16c23b60a2411962fddbe81de5cfbc68d96bb1",
+    "test_seconds_durations.py": "6b548c0585b5150639355d840fc901e83693ef50bd213c4c6ae07280aca2b525",
+    "test_bar_restore.py": "f4117dbf9d6db3b32ddd261673d19fa3089de79bd6cf566c44ea6fdf2f2ee6be",
+    "test_on_off_services.py": "bcb22a81f6351657c859f65d7095aa65f4198de692d7393b753af4375a172ed7",
+    "test_pid_transitions.py": "6b8658e3796fb1147d493d92e8e202fe862ca8b945acee3548d22f7a3ec5fbf8",
+    "test_bar_boundaries.py": "49a87f0db73d5dec7f08a371750e7278acda1d73a2548f157ad6ab249c18bffc",
+    "test_climate.py": "eda01962130afb6a832c40ca5f67d643d54e9c843dae9ced118703fa87e88fb7"
+  },
+  "patch_sha256": "d9e1f604f9920db5088ea283bc4cb956624b29ede22c6ad1aec1be1a64914961"
+}

@@ -1,5 +1,4 @@
 {
-  "name": "Smart thermostat (PID)",
-  "render_readme": true,
-  "homeassistant": "2024.2.0"
+  "name": "Hodko Smart Thermostat PID",
+  "homeassistant": "2026.11.2"
 }
