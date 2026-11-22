@@ -3,7 +3,7 @@
   "upstream_repository": "https://github.com/ScratMan/HASmartThermostat",
   "upstream_commit": "a2e7e42b4c14d84dcba5ae11f93451ce08e4cbea",
   "previous_git_version": "2026.11.2+hodko.bar.1",
-  "published_repository": null,
+  "published_repository": "sochorf/hodko-smart-thermostat-pid",
   "component_hashes_before_manifest_change": {
     "custom_components/smart_thermostat/__init__.py": "c96f8eb7428483ad3ae2f291fdda10e9ff48fd3abc46d94baf3f8f4504bcda65",
     "custom_components/smart_thermostat/brand/icon.png": "a285cb0c3da2ceac7dbe76ad5fbdd6b15138946235370222d1e3ef743610b64a",
